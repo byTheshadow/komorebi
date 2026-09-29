@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/komorebi/', // 适配 GitHub Pages 仓库路径
   plugins: [
     react(),
     VitePWA({
