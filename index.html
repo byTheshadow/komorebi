@@ -2,16 +2,80 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <!-- 针对 iOS PWA 全屏沉浸适配 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Komorebi" />
     <title>Komorebi · 木漏</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+      /* 开屏加载层原生样式 (在 React 加载前生效) */
+      #splash-loader {
+        position: fixed;
+        inset: 0;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+      }
+      #splash-loader.loaded {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .splash-title {
+        font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+        font-size: 20px;
+        font-weight: 300;
+        letter-spacing: 0.25em;
+        color: #334155;
+        opacity: 0;
+        transform: translateY(8px);
+        animation: textFadeIn 2.2s forwards cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+      }
+      .splash-sub {
+        font-size: 12px;
+        letter-spacing: 0.15em;
+        color: #94a3b8;
+        margin-top: 14px;
+        opacity: 0;
+        animation: textFadeIn 2.4s forwards cubic-bezier(0.16, 1, 0.3, 1) 0.6s;
+      }
+      .splash-line {
+        width: 32px;
+        height: 1px;
+        background: rgba(148, 163, 184, 0.35);
+        margin-top: 24px;
+        transform: scaleX(0);
+        animation: lineGrow 2s forwards cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+      }
+      @keyframes textFadeIn {
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes lineGrow {
+        to { transform: scaleX(1); }
+      }
+    </style>
   </head>
-  <body class="overflow-x-hidden antialiased select-none">
+  <body>
+    <!-- 开屏文字优雅浮现缓冲区 -->
+    <div id="splash-loader">
+      <div class="splash-title">Komorebi · 木漏</div>
+      <div class="splash-line"></div>
+      <div class="splash-sub">光影流转，静候晨昏</div>
+    </div>
+
+    <!-- React 挂载根节点 -->
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
