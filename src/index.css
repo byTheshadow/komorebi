@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, sans-serif;
+}
