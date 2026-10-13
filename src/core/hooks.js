@@ -33,22 +33,27 @@ export function useScheduleData() {
   )
 }
 
-/** 让外壳高度跟随 visualViewport：仅在键盘弹起时收缩高度，平时坚决占满物理屏幕 */
+/** 让外壳高度跟随 visualViewport：仅在真实输入且键盘弹起时收缩高度，平时坚决占满物理屏幕 */
 export function useViewportHeight() {
   useEffect(() => {
     const root = document.documentElement
     const vv = window.visualViewport
 
     const apply = () => {
-      // 只有视口高度明显缩减（大于 120px）时才判定为虚拟键盘弹起
-      const isKbOpen = vv ? window.innerHeight - vv.height > 120 : false
+      // 必须同时满足：1. 正在输入（焦点在 input/textarea）；2. visualViewport 高度严重缩减 (> 150px)
+      // 彻底杜绝移动端浏览器因工具栏、地址栏显示/收起而误触发键盘缩容
+      const activeEl = document.activeElement
+      const isInputFocused =
+        activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)
+
+      const isKbOpen = Boolean(isInputFocused && vv && window.innerHeight - vv.height > 150)
       root.classList.toggle('kb-open', isKbOpen)
 
       if (isKbOpen && vv) {
         root.style.setProperty('--app-h', `${Math.round(vv.height)}px`)
         if (vv.offsetTop > 0) window.scrollTo(0, 0)
       } else {
-        // 平常状态：彻底移除内联 --app-h，完全交给 CSS 的 top:0 & bottom:0 贴底铺满
+        // 平常状态：彻底清除 --app-h，完全交给 CSS 的 inset: 0 贴底铺满
         root.style.removeProperty('--app-h')
       }
     }
@@ -57,11 +62,17 @@ export function useViewportHeight() {
     vv?.addEventListener('resize', apply)
     vv?.addEventListener('scroll', apply)
     window.addEventListener('orientationchange', apply)
+    window.addEventListener('focusin', apply)
+    window.addEventListener('focusout', () => setTimeout(apply, 100))
+
     return () => {
       vv?.removeEventListener('resize', apply)
       vv?.removeEventListener('scroll', apply)
       window.removeEventListener('orientationchange', apply)
+      window.removeEventListener('focusin', apply)
+      window.removeEventListener('focusout', apply)
       root.style.removeProperty('--app-h')
+      root.classList.remove('kb-open')
     }
   }, [])
 }

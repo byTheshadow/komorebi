@@ -34,7 +34,7 @@
   box-sizing: border-box;
 }
 
-/* ───────── 视口基础层：撑满全平台物理边缘 ───────── */
+/* ───────── 视口基础层：撑满全平台物理视口，摒弃冲突的 -webkit-fill-available ───────── */
 html {
   background: #f4f8fb;
   height: 100%;
@@ -87,7 +87,7 @@ select,
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100%;
   height: 100dvh;
   background: var(--bg-gradient);
   z-index: 0;
@@ -131,13 +131,10 @@ select,
   }
 }
 
-/* ───────── 应用外壳：平时由 top:0 和 bottom:0 自然拉伸拉满 ───────── */
+/* ───────── 应用外壳：平时由 inset:0 自然拉伸拉满 ───────── */
 .app-shell {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -147,21 +144,18 @@ select,
 /* 仅在键盘真正弹起时，由 JS 设置的高度撑起底栏 */
 .kb-open .app-shell {
   bottom: auto;
-  height: var(--app-h);
+  height: var(--app-h, 100dvh);
 }
 
 .overlay-root {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 50;
 }
 
 .kb-open .overlay-root {
   bottom: auto;
-  height: var(--app-h);
+  height: var(--app-h, 100dvh);
 }
 
 /* 安全区适配 */
