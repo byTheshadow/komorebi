@@ -99,7 +99,7 @@ function Shell() {
 
 function Root() {
   const [ready, setReady] = useState(false)
-  useViewportHeight()
+  // useViewportHeight()
   const done = useCallback(() => setReady(true), [])
   return (
     <>
