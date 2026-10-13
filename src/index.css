@@ -31,33 +31,45 @@
 
 * {
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
-html,
-body,
-#root {
-  height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-/* 底色放在 html 上，body 保持透明，否则 body 会盖住负 z-index 的背景光斑层 */
+/* ───────── 视口基础层：撑满 iOS 物理边缘 ───────── */
 html {
   background: #f4f8fb;
+  min-height: 100%;
+  height: -webkit-fill-available;
+}
+
+[data-theme='peach'] html {
+  background: #fff1f2;
 }
 
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   color: rgb(var(--text-main));
   background: transparent;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
-  /* 界面 chrome 不可选，内容区用 .selectable 单独放开 */
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+}
+
+#root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 input,
@@ -69,22 +81,69 @@ select,
   -webkit-touch-callout: default;
 }
 
-/* ───────── 外壳：平日完全贴底铺满，仅在键盘弹起时受 --app-h 控制 ───────── */
-/* ───────── 外壳：平日完全贴底铺满，仅在键盘弹起时受 --app-h 控制 ───────── */
+/* ───────── 背景层：在 0 层铺满，避免负层级穿透露白 ───────── */
+.ambient-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: -webkit-fill-available;
+  background: var(--bg-gradient);
+  z-index: 0;
+  pointer-events: none;
+  transition: background 0.8s ease;
+  overflow: hidden;
+}
+
+.light-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orb-float 14s infinite alternate ease-in-out;
+  transition: background 0.8s ease;
+}
+
+.orb-a {
+  width: 450px;
+  height: 450px;
+  background: var(--orb-1);
+  top: -100px;
+  left: -100px;
+}
+
+.orb-b {
+  width: 500px;
+  height: 500px;
+  background: var(--orb-2);
+  bottom: -100px;
+  right: -100px;
+  animation-duration: 18s;
+}
+
+@keyframes orb-float {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(60px, 40px) scale(1.08);
+  }
+}
+
+/* ───────── 应用外壳：平时由 top:0 和 bottom:0 自然拉伸拉满 ───────── */
 .app-shell {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  /* ⚠️ 绝对不要在这里写 height: 100% 或 height: 100dvh！
-     仅靠 top:0 与 bottom:0 自动上下拉伸，才能 100% 物理贴紧 iPhone 最底部 */
+  z-index: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 当且仅当点击输入框、键盘真正弹起时，解除贴底，改由 JS 计算高度顶起 */
+/* 仅在键盘真正弹起时，由 JS 设置的高度撑起底栏 */
 .kb-open .app-shell {
   bottom: auto;
   height: var(--app-h);
@@ -96,6 +155,7 @@ select,
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 50;
 }
 
 .kb-open .overlay-root {
@@ -103,6 +163,7 @@ select,
   height: var(--app-h);
 }
 
+/* 安全区适配 */
 .safe-top {
   padding-top: max(env(safe-area-inset-top, 0px), 14px);
 }
@@ -123,47 +184,6 @@ select,
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-}
-
-/* ───────── 背景：弥散柔光（Komorebi 斑驳感） ───────── */
-.ambient-canvas {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-gradient);
-  z-index: -2;
-  transition: background 0.8s ease;
-  overflow: hidden;
-}
-.light-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  animation: orb-float 14s infinite alternate ease-in-out;
-  transition: background 0.8s ease;
-}
-.orb-a {
-  width: 450px;
-  height: 450px;
-  background: var(--orb-1);
-  top: -100px;
-  left: -100px;
-}
-.orb-b {
-  width: 500px;
-  height: 500px;
-  background: var(--orb-2);
-  bottom: -100px;
-  right: -100px;
-  animation-duration: 18s;
-}
-@keyframes orb-float {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-  100% {
-    transform: translate(60px, 40px) scale(1.08);
-  }
 }
 
 /* ───────── 组件层 ───────── */
@@ -246,7 +266,6 @@ select,
   }
 }
 
-/* 日期/时间输入在 iOS 上的外观统一 */
 input[type='date'],
 input[type='time'] {
   -webkit-appearance: none;

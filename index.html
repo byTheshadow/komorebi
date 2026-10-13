@@ -2,12 +2,15 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <!-- viewport-fit=cover：让页面铺满刘海/灵动岛与底部横条下方，由 CSS 的 safe-area 负责避让 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- 严苛模式 viewport-fit=cover，强制 Safari 铺满刘海、灵动岛与底部横条 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no"
+    />
     <title>Komorebi · 木漏</title>
     <meta name="description" content="Komorebi · 温柔的日程陪伴" />
 
-    <!-- iOS PWA 专属：添加到主屏幕后以独立应用运行（Web Push 的前提） -->
+    <!-- iOS PWA 独立应用配置 -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Komorebi" />
@@ -24,10 +27,9 @@
       rel="stylesheet"
     />
 
-    <!-- 开屏第一帧：JS 还没加载完时就先出现的呼吸环（纯 CSS，无任何依赖）。
-         React 的 Splash 接管后会把它移除，两者位置/尺寸一致，视觉上是同一个环。 -->
+    <!-- 开屏呼吸环 -->
     <style>
-      html, body { margin: 0; height: 100%; }
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
       html { background: #eef6fb; }
       #boot { position: fixed; inset: 0; z-index: 9999;
         background: radial-gradient(circle at 15% 15%, #e0f2fe 0%, #f0fdf4 38%, #f8fafc 82%); }

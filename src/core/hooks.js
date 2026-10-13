@@ -33,7 +33,6 @@ export function useScheduleData() {
   )
 }
 
-/** 让外壳高度跟随 visualViewport：iOS 键盘弹起时，底部输入栏会被顶到键盘上方 */
 /** 让外壳高度跟随 visualViewport：仅在键盘弹起时收缩高度，平时坚决占满物理屏幕 */
 export function useViewportHeight() {
   useEffect(() => {
@@ -41,16 +40,15 @@ export function useViewportHeight() {
     const vv = window.visualViewport
 
     const apply = () => {
-      // 只有视口明显缩短（超过 120px）时才判定为键盘弹起
+      // 只有视口高度明显缩减（大于 120px）时才判定为虚拟键盘弹起
       const isKbOpen = vv ? window.innerHeight - vv.height > 120 : false
       root.classList.toggle('kb-open', isKbOpen)
 
       if (isKbOpen && vv) {
-        // 键盘弹起时：精准跟随 visualViewport 高度，把输入框顶上来
         root.style.setProperty('--app-h', `${Math.round(vv.height)}px`)
         if (vv.offsetTop > 0) window.scrollTo(0, 0)
       } else {
-        // 平常状态：彻底移除内联 --app-h，完全交给 CSS 的 100dvh / bottom: 0 贴底铺满
+        // 平常状态：彻底移除内联 --app-h，完全交给 CSS 的 top:0 & bottom:0 贴底铺满
         root.style.removeProperty('--app-h')
       }
     }
