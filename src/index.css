@@ -77,14 +77,14 @@ select,
   left: 0;
   right: 0;
   bottom: 0;
-  /* 关键：平时绝对不要写死 height！由 top:0 和 bottom:0 自动拉伸 100% 物理铺满 */
-  height: auto; 
+  /* ⚠️ 绝对不要在这里写 height: 100% 或 height: 100dvh！
+     仅靠 top:0 与 bottom:0 自动上下拉伸，才能 100% 物理贴紧 iPhone 最底部 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 当且仅当键盘弹起时，解除 bottom: 0，由 --app-h 顶起高度 */
+/* 当且仅当点击输入框、键盘真正弹起时，解除贴底，改由 JS 计算高度顶起 */
 .kb-open .app-shell {
   bottom: auto;
   height: var(--app-h);
@@ -96,7 +96,6 @@ select,
   left: 0;
   right: 0;
   bottom: 0;
-  height: auto;
 }
 
 .kb-open .overlay-root {
