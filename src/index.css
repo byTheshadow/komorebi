@@ -16,7 +16,7 @@
   --glass-border: rgba(255, 255, 255, 0.85);
   --glass-shadow: 0 20px 40px -15px rgba(148, 163, 184, 0.15), 0 1px 3px rgba(0, 0, 0, 0.02);
   --pill-bg: rgba(255, 255, 255, 0.75);
-  --app-h: 100dvh;
+  --app-h: 100%;
 }
 
 [data-theme='peach'] {
@@ -34,18 +34,8 @@
   box-sizing: border-box;
 }
 
-/* ───────── 视口基础层：撑满全平台物理视口 ───────── */
-html {
-  background: #f4f8fb;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-[data-theme='peach'] html {
-  background: #fff1f2;
-}
-
+/* ───────── 视口基础层：绝对统一铺满全屏，全链条继承 ───────── */
+html,
 body {
   margin: 0;
   padding: 0;
@@ -53,28 +43,37 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
-  font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  color: rgb(var(--text-main));
-  background: transparent;
-  -webkit-font-smoothing: antialiased;
-  -webkit-text-size-adjust: 100%;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
-/* 关键修复：#root 依靠四边固定拉满，height: auto 避免覆盖 bottom: 0 导致移动端底部留白 */
+html {
+  /* 兜底底色与渐变同调，杜绝任何露白 */
+  background: #e0f2fe;
+}
+
+[data-theme='peach'] html {
+  background: #ffe4e6;
+}
+
+body {
+  position: relative;
+  background: transparent;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: rgb(var(--text-main));
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
 #root {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  z-index: 1;
+  position: relative;
 }
 
 input,
@@ -86,15 +85,13 @@ select,
   -webkit-touch-callout: default;
 }
 
-/* ───────── 背景层：在 0 层铺满，避免负层级穿透露白 ───────── */
+/* ───────── 背景层：使用四向定点铺满视口 ───────── */
 .ambient-canvas {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100%;
-  height: auto;
   background: var(--bg-gradient);
   z-index: 0;
   pointer-events: none;
@@ -137,25 +134,23 @@ select,
   }
 }
 
-/* ───────── 应用外壳：平时由 top:0 到 bottom:0 自然拉伸拉满 ───────── */
+/* ───────── 应用外壳：贴满整个根容器 ───────── */
 .app-shell {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100%;
-  height: auto;
   z-index: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 仅在键盘真正弹起时，由 JS 设置的高度撑起底栏 */
+/* 键盘弹起时适应高度 */
 .kb-open .app-shell {
   bottom: auto;
-  height: var(--app-h, 100dvh);
+  height: var(--app-h, 100%);
 }
 
 .overlay-root {
@@ -169,7 +164,7 @@ select,
 
 .kb-open .overlay-root {
   bottom: auto;
-  height: var(--app-h, 100dvh);
+  height: var(--app-h, 100%);
 }
 
 /* 安全区适配 */
