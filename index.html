@@ -2,10 +2,9 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <!-- 严苛模式 viewport-fit=cover，强制 Safari 铺满刘海、灵动岛与底部横条 -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>Komorebi · 木漏</title>
     <meta name="description" content="Komorebi · 温柔的日程陪伴" />
@@ -14,7 +13,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Komorebi" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="theme-color" content="#e0f2fe" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -29,19 +28,44 @@
 
     <!-- 开屏呼吸环 -->
     <style>
-      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
-      html { background: #eef6fb; }
-      #boot { position: fixed; inset: 0; z-index: 9999;
-        background: radial-gradient(circle at 15% 15%, #e0f2fe 0%, #f0fdf4 38%, #f8fafc 82%); }
-      #boot .ring { position: absolute; left: 50%; top: 40%; width: 92px; height: 92px; margin: -46px 0 0 -46px;
-        border-radius: 50%; border: 1.5px solid rgba(2,132,199,.55); animation: boot-breath 3.2s ease-in-out infinite; }
-      #boot .ring::after { content: ""; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px;
-        border-radius: 50%; background: #0284c7; }
-      @keyframes boot-breath { 0%,100% { transform: scale(.92); opacity: .55 } 50% { transform: scale(1.06); opacity: 1 } }
-      @media (prefers-reduced-motion: reduce) { #boot .ring { animation: none } }
+      #boot { 
+        position: fixed; 
+        inset: 0; 
+        z-index: 9999;
+        background: radial-gradient(circle at 15% 15%, #e0f2fe 0%, #f0fdf4 38%, #f8fafc 82%); 
+      }
+      #boot .ring { 
+        position: absolute; 
+        left: 50%; 
+        top: 40%; 
+        width: 92px; 
+        height: 92px; 
+        margin: -46px 0 0 -46px;
+        border-radius: 50%; 
+        border: 1.5px solid rgba(2,132,199,.55); 
+        animation: boot-breath 3.2s ease-in-out infinite; 
+      }
+      #boot .ring::after { 
+        content: ""; 
+        position: absolute; 
+        left: 50%; 
+        top: 50%; 
+        width: 6px; 
+        height: 6px; 
+        margin: -3px 0 0 -3px;
+        border-radius: 50%; 
+        background: #0284c7; 
+      }
+      @keyframes boot-breath { 
+        0%,100% { transform: scale(.92); opacity: .55 } 
+        50% { transform: scale(1.06); opacity: 1 } 
+      }
+      @media (prefers-reduced-motion: reduce) { 
+        #boot .ring { animation: none } 
+      }
     </style>
   </head>
-  <body>
+  <body class="antialiased selection:bg-sky-200">
     <div id="boot" aria-hidden="true"><div class="ring"></div></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
