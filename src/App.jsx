@@ -65,7 +65,7 @@ function Shell() {
         <AnimatePresence mode="wait">
           <motion.div
             key={space}
-            className="absolute inset-0"
+            className="absolute inset-0 flex flex-col"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -73,7 +73,9 @@ function Shell() {
           >
             <ErrorBoundary name={space} onHome={() => setSpace('main')}>
               <Suspense fallback={null}>
-                <Space openNav={() => setNavOpen(true)} goto={setSpace} />
+                <div className="h-full w-full">
+                  <Space openNav={() => setNavOpen(true)} goto={setSpace} />
+                </div>
               </Suspense>
             </ErrorBoundary>
           </motion.div>

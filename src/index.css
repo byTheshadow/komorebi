@@ -34,11 +34,11 @@
   box-sizing: border-box;
 }
 
-/* ───────── 视口基础层：撑满 iOS 物理边缘 ───────── */
+/* ───────── 视口基础层：撑满全平台物理边缘 ───────── */
 html {
   background: #f4f8fb;
-  min-height: 100%;
-  height: -webkit-fill-available;
+  height: 100%;
+  height: 100dvh;
 }
 
 [data-theme='peach'] html {
@@ -49,8 +49,8 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
+  height: 100%;
+  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
@@ -65,10 +65,11 @@ body {
 }
 
 #root {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -87,7 +88,7 @@ select,
   inset: 0;
   width: 100vw;
   height: 100vh;
-  height: -webkit-fill-available;
+  height: 100dvh;
   background: var(--bg-gradient);
   z-index: 0;
   pointer-events: none;
