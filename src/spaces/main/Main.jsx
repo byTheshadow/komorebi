@@ -177,33 +177,36 @@ export default function Main({ openNav, goto }) {
           </div>
         </div>
       </div>
-{/* 常驻吸底胶囊输入条：底座一体化毛玻璃铺满到底 */}
-<div className="safe-bottom shrink-0 border-t border-white/40 bg-white/40 px-5 pt-2 backdrop-blur-xl">
-  <div
-    className="mx-auto flex w-full max-w-[680px] items-end gap-2 rounded-[32px] border border-white/90 bg-white/70 py-1.5 pl-5 pr-1.5 shadow-sm transition focus-within:bg-white"
-  >
-    <textarea
-      ref={area}
-      rows={1}
-      value={input}
-      onChange={(e) => { setInput(e.target.value); autosize() }}
-      onKeyDown={onKeyDown}
-      enterKeyHint="send"
-      placeholder={t('main.placeholder')}
-      aria-label={t('main.placeholder')}
-      className="max-h-[120px] min-h-[44px] flex-1 resize-none bg-transparent py-[11px] text-[16px] leading-[22px] text-ink outline-none placeholder:font-light placeholder:text-faint"
-    />
-    <button
-      type="button"
-      aria-label={t('common.send')}
-      disabled={!input.trim() || sending}
-      onClick={() => send(input)}
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-white transition active:scale-95 disabled:opacity-30"
-    >
-      {sending ? <Loader2 size={18} strokeWidth={1.5} className="animate-spin" /> : <ArrowUp size={18} strokeWidth={1.5} />}
-    </button>
-  </div>
-</div>
+
+            {/* 常驻吸底胶囊输入条：快捷记事 + AI 对话二合一 */}
+      <div className="safe-bottom shrink-0 px-5 pt-2">
+        <div
+          className="mx-auto flex w-full max-w-[680px] items-end gap-2 rounded-[32px] border border-white/90 py-1.5 pl-5 pr-1.5 backdrop-blur-[28px] transition focus-within:bg-white/95"
+          style={{ background: 'var(--pill-bg)', boxShadow: '0 20px 45px -10px rgba(71,85,105,0.18), inset 0 0 1px 1px rgba(255,255,255,0.8)' }}
+        >
+          <textarea
+            ref={area}
+            rows={1}
+            value={input}
+            onChange={(e) => { setInput(e.target.value); autosize() }}
+            onKeyDown={onKeyDown}
+            enterKeyHint="send"
+            placeholder={t('main.placeholder')}
+            aria-label={t('main.placeholder')}
+            className="max-h-[120px] min-h-[44px] flex-1 resize-none bg-transparent py-[11px] text-[16px] leading-[22px] text-ink outline-none placeholder:font-light placeholder:text-faint"
+          />
+          <button
+            type="button"
+            aria-label={t('common.send')}
+            disabled={!input.trim() || sending}
+            onClick={() => send(input)}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-white transition active:scale-95 disabled:opacity-30"
+          >
+            {sending ? <Loader2 size={18} strokeWidth={1.5} className="animate-spin" /> : <ArrowUp size={18} strokeWidth={1.5} />}
+          </button>
+        </div>
+      </div>
+
 
 
       <HistoryDrawer
