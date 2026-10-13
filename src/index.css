@@ -277,3 +277,16 @@ input[type='time'] {
     transition-duration: 0.01ms !important;
   }
 }
+/* ─── 调试探针：抓出到底谁短了（排查完可直接删除） ─── */
+html {
+  background-color: #ff0000 !important; /* 纯红 */
+}
+body {
+  background-color: #00ff00 !important; /* 纯绿 */
+}
+#root {
+  background-color: #0000ff !important; /* 纯蓝 */
+}
+.app-shell {
+  background-color: #ffff00 !important; /* 纯黄 */
+}
