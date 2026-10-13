@@ -34,11 +34,12 @@
   box-sizing: border-box;
 }
 
-/* ───────── 视口基础层：撑满全平台物理视口，摒弃冲突的 -webkit-fill-available ───────── */
+/* ───────── 视口基础层：撑满全平台物理视口 ───────── */
 html {
   background: #f4f8fb;
+  width: 100%;
   height: 100%;
-  height: 100dvh;
+  overflow: hidden;
 }
 
 [data-theme='peach'] html {
@@ -50,7 +51,6 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
@@ -64,13 +64,17 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* 关键修复：#root 依靠四边固定拉满，height: auto 避免覆盖 bottom: 0 导致移动端底部留白 */
 #root {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
-  height: 100%;
-  height: 100dvh;
+  height: auto;
   overflow: hidden;
+  z-index: 1;
 }
 
 input,
@@ -85,10 +89,12 @@ select,
 /* ───────── 背景层：在 0 层铺满，避免负层级穿透露白 ───────── */
 .ambient-canvas {
   position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100%;
-  height: 100dvh;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
   background: var(--bg-gradient);
   z-index: 0;
   pointer-events: none;
@@ -131,10 +137,15 @@ select,
   }
 }
 
-/* ───────── 应用外壳：平时由 inset:0 自然拉伸拉满 ───────── */
+/* ───────── 应用外壳：平时由 top:0 到 bottom:0 自然拉伸拉满 ───────── */
 .app-shell {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -149,7 +160,10 @@ select,
 
 .overlay-root {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 50;
 }
 
@@ -276,17 +290,4 @@ input[type='time'] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-/* ─── 调试探针：抓出到底谁短了（排查完可直接删除） ─── */
-html {
-  background-color: #ff0000 !important; /* 纯红 */
-}
-body {
-  background-color: #00ff00 !important; /* 纯绿 */
-}
-#root {
-  background-color: #0000ff !important; /* 纯蓝 */
-}
-.app-shell {
-  background-color: #ffff00 !important; /* 纯黄 */
 }
