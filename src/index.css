@@ -4,16 +4,17 @@
 
 /* ───────── 主题 token（RGB 三元组，便于 Tailwind 加透明度） ───────── */
 :root,
+html,
 html[data-theme='mist'] {
   /* Mist · 冰川白蓝（默认） */
   --accent: 2 132 199;
   --text-main: 15 23 42;
   --text-muted: 100 116 139;
   --text-light: 148 163 184;
-  --bg-base: #f0fdf4;
-  --bg-gradient: linear-gradient(175deg, #e0f2fe 0%, #f0fdf4 45%, #e0f2fe 100%);
-  --orb-1: rgba(186, 230, 253, 0.7);
-  --orb-2: rgba(224, 231, 255, 0.6);
+  --bg-base: #e0f2fe;
+  --bg-gradient: linear-gradient(175deg, #e0f2fe 0%, #f0fdf4 42%, #bae6fd 85%, #7dd3fc 100%);
+  --orb-1: rgba(186, 230, 253, 0.75);
+  --orb-2: rgba(199, 210, 254, 0.7);
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(255, 255, 255, 0.85);
   --glass-shadow: 0 20px 40px -15px rgba(148, 163, 184, 0.15), 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -25,10 +26,10 @@ html[data-theme='peach'],
 body[data-theme='peach'] {
   /* Peach Glow · 珍珠白粉 */
   --accent: 225 29 72;
-  --bg-base: #fff1f2;
-  --bg-gradient: linear-gradient(175deg, #ffe4e6 0%, #fff1f2 45%, #ffe4e6 100%);
-  --orb-1: rgba(254, 205, 211, 0.7);
-  --orb-2: rgba(254, 240, 138, 0.5);
+  --bg-base: #ffe4e6;
+  --bg-gradient: linear-gradient(175deg, #ffe4e6 0%, #fff1f2 42%, #fecdd3 85%, #fda4af 100%);
+  --orb-1: rgba(254, 205, 211, 0.75);
+  --orb-2: rgba(254, 240, 138, 0.6);
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.9);
 }
@@ -42,7 +43,8 @@ body[data-theme='peach'] {
 html {
   background: var(--bg-base);
   height: 100%;
-  height: -webkit-fill-available;
+  min-height: 100%;
+  overflow: hidden;
   transition: background 0.5s ease;
 }
 
@@ -50,9 +52,8 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
+  height: 100%;
+  min-height: 100%;
   background: transparent;
   overflow: hidden;
   overscroll-behavior: none;
@@ -62,24 +63,36 @@ body {
   -webkit-text-size-adjust: 100%;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #root {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
-/* ───────── 背景层：覆盖整个屏幕并产生全景弥散 ───────── */
+input,
+textarea,
+select,
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* ───────── 背景层：物理超长延展（向屏幕外多长出 160px），彻底消除底部生硬断层 ───────── */
 .ambient-canvas {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: -160px;
   width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  min-height: calc(100vh + 160px);
+  min-height: calc(100dvh + 160px);
   background: var(--bg-gradient);
   z-index: 0;
   pointer-events: none;
@@ -90,7 +103,6 @@ body {
 .light-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
   pointer-events: none;
   animation: orb-float 14s infinite alternate ease-in-out;
   transition: background 0.8s ease;
@@ -103,15 +115,17 @@ body {
   background: var(--orb-1);
   top: -120px;
   left: -120px;
+  filter: blur(80px);
 }
 
-/* 底部光斑：加大尺寸并向上微调，确保手机底部完全被柔光浸润 */
+/* 底部超大光斑：超长覆盖整个下半屏与底部所有安全区边缘 */
 .orb-b {
-  width: 550px;
-  height: 550px;
+  width: 680px;
+  height: 680px;
   background: var(--orb-2);
-  bottom: -60px;
+  bottom: -160px;
   right: -80px;
+  filter: blur(95px);
   animation-duration: 18s;
 }
 
@@ -128,9 +142,8 @@ body {
 .app-shell {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
   z-index: 1;
   display: flex;
   flex-direction: column;
@@ -149,9 +162,6 @@ body {
 }
 .safe-bottom {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 14px);
-}
-.kb-open .safe-bottom {
-  padding-bottom: 10px;
 }
 
 .no-scrollbar {
