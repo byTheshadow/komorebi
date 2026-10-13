@@ -8,8 +8,9 @@ import { useViewportHeight } from './core/hooks.js'
 import { startScheduler } from './core/scheduler.js'
 import { startCloudSync } from './core/pushManager.js'
 import Splash from './spaces/splash/Splash.jsx'
+import FirstLaunchModal from './spaces/splash/FirstLaunchModal.jsx'
+import GuideSheet from './spaces/settings/GuideSheet.jsx'
 
-// 每个空间是独立的代码块 + 独立的错误沙盒：某个界面坏了，只影响它自己
 const SPACES = {
   main: lazy(() => import('./spaces/main/Main.jsx')),
   calendar: lazy(() => import('./spaces/calendar/Calendar.jsx')),
@@ -22,7 +23,35 @@ function Shell() {
   const [space, setSpace] = useState('main')
   const [navOpen, setNavOpen] = useState(false)
 
-  // 本地提醒调度 + 云端推送同步，生命周期跟随整个外壳
+  // 首次启用弹窗 & 说明书弹窗状态
+  const [showFirstLaunch, setShowFirstLaunch] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
+
+  useEffect(() => {
+    try {
+      const hasLaunched = localStorage.getItem('komorebi_launched')
+      if (!hasLaunched) {
+        setShowFirstLaunch(true)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const handleDismissFirstLaunch = useCallback(() => {
+    try {
+      localStorage.setItem('komorebi_launched', 'true')
+    } catch {
+      /* ignore */
+    }
+    setShowFirstLaunch(false)
+  }, [])
+
+  const handleOpenGuideFromModal = useCallback(() => {
+    handleDismissFirstLaunch()
+    setShowGuide(true)
+  }, [handleDismissFirstLaunch])
+
   useEffect(() => {
     const stopLocal = startScheduler(getCtx)
     const stopCloud = startCloudSync(getCtx)
@@ -50,7 +79,18 @@ function Shell() {
           </motion.div>
         </AnimatePresence>
       </div>
+
       <NavDrawer open={navOpen} onClose={() => setNavOpen(false)} space={space} goto={setSpace} />
+
+      {/* 首次启用弹窗 */}
+      <FirstLaunchModal
+        open={showFirstLaunch}
+        onConfirm={handleDismissFirstLaunch}
+        onOpenGuide={handleOpenGuideFromModal}
+      />
+
+      {/* 全局说明书弹层 */}
+      <GuideSheet open={showGuide} onClose={() => setShowGuide(false)} />
     </motion.div>
   )
 }

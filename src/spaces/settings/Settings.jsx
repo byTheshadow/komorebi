@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Bell, Check, Cloud, Database, Download, Eye, EyeOff, Globe, Loader2, RefreshCw, Sparkles, Upload, UserRound, XCircle, Zap,
+  Bell, BookOpen, Check, Cloud, Database, Download, Eye, EyeOff, Globe, Loader2, RefreshCw, Sparkles, Upload, UserRound, XCircle, Zap,
 } from 'lucide-react'
 import { exportAll, importAll, wipeAll } from '../../core/db.js'
 import { describeError, fetchModels, isAiReady, testConnection } from '../../core/ai.js'
@@ -9,6 +9,7 @@ import { getSupport, notify, requestPermission, subscribePush, syncNow, unsubscr
 import { useApp } from '../../core/store.jsx'
 import { TopBar } from '../../core/Shell.jsx'
 import { Field, Segmented, Switch, useConfirm } from '../../core/ui.jsx'
+import GuideSheet from './GuideSheet.jsx'
 
 function Section({ icon: Icon, title, badge, children }) {
   return (
@@ -74,8 +75,11 @@ export default function Settings({ openNav }) {
   const [aiStatus, setAiStatus] = useState(null)
   const [cloudStatus, setCloudStatus] = useState(null)
   const [perm, setPerm] = useState(() => getSupport().permission)
+  const [guideOpen, setGuideOpen] = useState(false)
   const importRef = useRef(null)
   const sup = getSupport()
+
+  const isZh = settings.lang === 'zh'
 
   /* ───── AI ───── */
   const needBase = () => {
@@ -212,6 +216,30 @@ export default function Settings({ openNav }) {
 
       <div className="scroll-y no-scrollbar min-h-0 flex-1 px-5 pb-12">
         <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 pt-2">
+          {/* 使用指南 · 说明书 常驻入口 */}
+          <div className="glass rounded-[26px] p-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+                <BookOpen size={19} strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium text-ink">
+                  {isZh ? '使用指南 · 说明书' : 'User Guide & Manual'}
+                </div>
+                <div className="mt-0.5 text-[12px] leading-relaxed text-faint truncate">
+                  {isZh ? '对话交互、日历课表与 API 报错解决方式' : 'Features, schedule types and API troubleshooting'}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-soft shrink-0 !px-4 !py-2 text-[13px]"
+              onClick={() => setGuideOpen(true)}
+            >
+              {isZh ? '查阅' : 'View'}
+            </button>
+          </div>
+
           {/* 通用 */}
           <Section icon={Globe} title={t('set.general')}>
             <Row label={t('set.language')}>
@@ -350,6 +378,9 @@ export default function Settings({ openNav }) {
           </footer>
         </div>
       </div>
+
+      {/* 说明书弹层 */}
+      <GuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} />
     </div>
   )
 }
