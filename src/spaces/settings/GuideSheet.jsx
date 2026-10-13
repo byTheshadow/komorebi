@@ -252,43 +252,54 @@ export default function GuideSheet({ open, onClose }) {
           </div>
         )}
 
-        {/* ───── 模块 5：常见 API 报错 ───── */}
+                {/* ───── 模块 5：常见 API 报错 ───── */}
         {tab === 'faq' && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             {[
               {
                 code: '401 Unauthorized',
                 title: '无效密钥',
-                desc: 'API 密钥错误、拼写有误或额度用尽。请检查密钥前后是否有不小心复制的多余空格。'
+                desc: 'API 密钥错误、拼写有误或额度用尽。请仔细检查密钥前后是否有不小心复制到的多余空格。'
               },
               {
                 code: '404 Not Found',
                 title: '接口路径错误',
-                desc: 'API 地址通常只需以 /v1 结尾（如 https://api.openai.com/v1）。请不要在末尾加上 /chat/completions。'
+                desc: 'API 地址通常只需以 /v1 结尾（如 https://api.openai.com/v1）。请不要在末尾手动拼接 /chat/completions。'
               },
               {
                 code: 'Failed to fetch',
                 title: '跨域拦截 (CORS) / 网络中断',
-                desc: '由于请求直接从手机浏览器发起，所用的 API 代理服务器必须允许跨域（包含 CORS 响应头）。'
+                desc: '由于请求直接从手机浏览器发起，所用的 API 代理服务器必须允许跨域（响应头包含 Access-Control-Allow-Origin）。'
               },
               {
                 code: '429 Rate Limit',
                 title: '超出请求频率或余额不足',
-                desc: '超出提供商的每分钟并发频率限制，或免费试用账户额度已耗尽。'
+                desc: '超出服务商的每分钟并发限制，或免费试用账户的调用额度已耗尽，请稍后再试或充值。'
               }
             ].map((item, idx) => (
-              <div key={idx} className="glass rounded-[22px] p-4.5 border border-white/80">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[13px] font-medium text-ink">{item.title}</span>
-                  <span className="font-mono text-[11px] text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/50">
+              <div
+                key={idx}
+                className="glass rounded-[24px] p-5 border border-white/90 shadow-sm"
+              >
+                {/* 标题栏与错误码胶囊 */}
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="text-[14px] font-medium text-ink tracking-wide">
+                    {item.title}
+                  </span>
+                  <span className="font-mono text-[11px] font-medium tracking-tight text-rose-600 bg-rose-50/90 border border-rose-200/70 px-2.5 py-1 rounded-full shrink-0 shadow-xs">
                     {item.code}
                   </span>
                 </div>
-                <div className="text-[12px] leading-relaxed text-muted mt-1.5">{item.desc}</div>
+
+                {/* 解释说明内容 */}
+                <p className="text-[13px] leading-relaxed text-muted/90 pl-0.5">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
         )}
+
       </div>
     </Sheet>
   )
