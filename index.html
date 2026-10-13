@@ -2,6 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <!-- 标准视口配置：移除会导致边界错位的参数，保留完整的 viewport-fit=cover -->
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
@@ -9,7 +10,7 @@
     <title>Komorebi · 木漏</title>
     <meta name="description" content="Komorebi · 温柔的日程陪伴" />
 
-    <!-- iOS PWA 独立应用配置 -->
+    <!-- iOS PWA 独立应用配置：将 black-translucent 修正为 default，根治底部死带截断 Bug -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Komorebi" />
@@ -28,6 +29,12 @@
 
     <!-- 开屏呼吸环 -->
     <style>
+      html, body { 
+        margin: 0; 
+        padding: 0; 
+        width: 100%; 
+        height: 100%; 
+      }
       #boot { 
         position: fixed; 
         inset: 0; 
@@ -65,7 +72,7 @@
       }
     </style>
   </head>
-  <body class="antialiased selection:bg-sky-200">
+  <body>
     <div id="boot" aria-hidden="true"><div class="ring"></div></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
