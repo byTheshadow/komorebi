@@ -27,7 +27,7 @@ body[data-theme='peach'] {
   --text-main: 15 23 42;
   --text-muted: 100 116 139;
   --text-light: 148 163 184;
-  --bg-gradient: radial-gradient(circle at 20% 15%, #ffe4e6 0%, #fff1f2 40%, #fef3c7 90%);
+  --bg-gradient: radial-gradient(circle at 20% 15%, #ffe4e6 0%, #fff1f2 40%, #fef3c7 95%);
   --orb-1: rgba(254, 205, 211, 0.7);
   --orb-2: rgba(254, 240, 138, 0.65);
   --glass-bg: rgba(255, 255, 255, 0.7);
@@ -41,23 +41,31 @@ body[data-theme='peach'] {
   box-sizing: border-box;
 }
 
-/* ───────── 视口基础层：撑满全平台物理视口 ───────── */
+/* ───────── 视口基础层：把渐变直接画在 html 顶层，彻底杜绝白底 ───────── */
 html {
-  background: transparent;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: background-image 0.8s ease;
 }
 
 body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background: transparent !important;
   overflow: hidden;
   overscroll-behavior: none;
   font-family: 'Plus Jakarta Sans', 'Noto Sans SC', ui-sans-serif, system-ui, -apple-system, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   color: rgb(var(--text-main));
-  background: transparent;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
   -webkit-user-select: none;
@@ -71,6 +79,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: transparent !important;
 }
 
 input,
@@ -82,31 +91,29 @@ select,
   -webkit-touch-callout: default;
 }
 
-/* ───────── 背景层：物理溢出屏幕，让弥散光晕覆盖物理边缘 ───────── */
+/* ───────── 辅助光斑层：只负责浮动光晕，底色由 html 兜底铺满 ───────── */
 .ambient-canvas {
   position: fixed;
-  /* 上下左右全部溢出，彻底穿透 iOS 灵动岛和底部手势横条 */
-  top: -60px;
+  top: -80px;
   bottom: -160px;
-  left: -40px;
-  right: -40px;
-  background: var(--bg-gradient);
+  left: -60px;
+  right: -60px;
+  background: transparent;
   z-index: 0;
   pointer-events: none;
-  transition: background 0.8s ease;
   overflow: hidden;
 }
 
 .light-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(85px);
   pointer-events: none;
   animation: orb-float 14s infinite alternate ease-in-out;
   transition: background 0.8s ease;
 }
 
-/* 上方光斑（粉/蓝） */
+/* 顶部光斑（粉/蓝） */
 .orb-a {
   width: 480px;
   height: 480px;
@@ -115,13 +122,13 @@ select,
   left: -80px;
 }
 
-/* 下方光斑（黄/淡蓝）：超大尺寸，扎根在屏幕底部 */
+/* 底部光斑（暖黄/淡蓝）：扎根在手机底部 */
 .orb-b {
-  width: 600px;
-  height: 600px;
+  width: 620px;
+  height: 620px;
   background: var(--orb-2);
   bottom: -40px;
-  right: -80px;
+  right: -60px;
   animation-duration: 18s;
 }
 
@@ -161,7 +168,7 @@ select,
   height: var(--app-h, 100dvh);
 }
 
-/* 安全区适配：保持背景透明，不加生硬底色 */
+/* 安全区适配 */
 .safe-top {
   padding-top: max(env(safe-area-inset-top, 0px), 14px);
 }
