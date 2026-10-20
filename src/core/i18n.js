@@ -130,6 +130,18 @@ const zh = {
 
   'notify.now': '现在', 'notify.inMin': '{n} 分钟后', 'notify.interval': '每 {n} 小时提醒一次', 'notify.habit': '今天的打卡还没完成',
   'notify.class': '{n} 分钟后上课', 'notify.countdownToday': '就是今天',
+
+  // 反复提醒（notify.nagX 的 {n} = 已逾期分钟数；AI 文案缺失时的回退模板）
+  'notify.nag1': '已经过了 {n} 分钟，还没完成哦',
+  'notify.nag2': '已经拖了 {n} 分钟了，现在就去做吧',
+  'notify.nag3': '都 {n} 分钟了，先把这件事做完吧',
+  'form.nag': '反复提醒',
+  'form.nagHint': '到点还没完成，就每隔一段时间再提醒，直到你完成。只在 {start}–{end} 之间提醒。',
+  'form.nagNeedsTime': '先设置时间，才能开启反复提醒',
+  'form.nagEvery': '提醒间隔', 'form.nagEveryOpt': '每 {n} 分钟',
+  'form.nagMax': '最多提醒', 'form.nagMaxOpt': '{n} 次',
+  'cal.nagEvery': '逾期后每 {n} 分钟提醒',
+  'action.snooze': '已暂停{kind}的催促',
 }
 
 const en = {
@@ -258,7 +270,19 @@ const en = {
   'err.server': 'The server ran into a problem. Try again later.', 'err.generic': 'Request failed',
 
   'notify.now': 'Now', 'notify.inMin': 'In {n} min', 'notify.interval': 'Repeats every {n} h', 'notify.habit': "Today's check-in is still open",
-  'notify.class': 'Class starts in {n} min', 'notify.countdownToday': "It's today",
+  'notify.class': 'Cass starts in {n} min', 'notify.countdownToday': "It's today",
+    'notify.class': 'Class starts in {n} min', 'notify.countdownToday': "It's today",
+
+  'notify.nag1': "It's been {n} min and this is still open",
+  'notify.nag2': "{n} min overdue. Let's do it now.",
+  'notify.nag3': "{n} min overdue. Finish this one first.",
+  'form.nag': 'Keep reminding me',
+  'form.nagHint': 'If it is not done by the due time, remind me again at intervals until it is. Only between {start} and {end}.',
+  'form.nagNeedsTime': 'Set a time first to turn this on',
+  'form.nagEvery': 'Interval', 'form.nagEveryOpt': 'Every {n} min',
+  'form.nagMax': 'At most', 'form.nagMaxOpt': '{n} times',
+  'cal.nagEvery': 'nags every {n} min once overdue',
+  'action.snooze': '{kind} nagging paused',
 }
 
 const DICT = { zh, en }

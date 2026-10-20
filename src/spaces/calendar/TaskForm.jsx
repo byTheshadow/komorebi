@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { addTask, deleteTask, updateTask } from '../../core/db.js'
+import { isAiReady, refreshNagTexts } from '../../core/ai.js'
 import { TASK_KINDS, weekdayName } from '../../core/schedule.js'
 import { useApp } from '../../core/store.jsx'
-import { Field, Sheet, useConfirm } from '../../core/ui.jsx'
-
+import { Field, Sheet, Switch, useConfirm } from '../../core/ui.jsx'
 const REMIND_OPTS = [0, 5, 10, 30, 60, 1440]
 const EVERY_OPTS = [0.5, 1, 2, 3, 4, 6, 8, 12]
+const NAG_EVERY_OPTS = [5, 10, 30]
+const NAG_MAX_OPTS = [3, 5, 8, 12]
 
 const initState = (task, date) => ({
   kind: task?.kind || 'todo',
@@ -21,6 +23,9 @@ const initState = (task, date) => ({
   weekdays: task?.weekdays || [],
   categoryId: task?.categoryId || 'daily',
   notes: task?.notes || '',
+  nag: !!task?.nag,
+  nagEveryMin: task?.nagEveryMin || 10,
+  nagMax: task?.nagMax || 8,
 })
 
 export default function TaskForm({ open, onClose, task, defaultDate, categories, catLabel }) {
@@ -41,16 +46,28 @@ export default function TaskForm({ open, onClose, task, defaultDate, categories,
     if (k === 'interval' && s.windowEnd < s.windowStart) return toast(t('form.badWindow'), 'error')
 
     const base = { kind: k, title, notes: s.notes.trim(), categoryId: s.categoryId, date: s.date }
+       // 反复提醒只对「有具体时间」的 todo / reminder 生效
+    const nagOn = (k === 'todo' || k === 'reminder') && s.nag && !!s.time
+    const nagFields = nagOn
+      ? { nag: true, nagEveryMin: Number(s.nagEveryMin), nagMax: Number(s.nagMax) }
+      : { nag: false }
     const byKind = {
-      todo: { time: s.time || null, remindBefore: Number(s.remindBefore) || null },
-      reminder: { time: s.time || null, remindBefore: Number(s.remindBefore) || null },
+      todo: { time: s.time || null, remindBefore: Number(s.remindBefore) || null, ...nagFields },
+      reminder: { time: s.time || null, remindBefore: Number(s.remindBefore) || null, ...nagFields },
       countdown: { time: null },
       interval: { everyHours: Number(s.everyHours), windowStart: s.windowStart, windowEnd: s.windowEnd, endDate: s.endDate || null },
       habit: { time: s.time || null, weekdays: s.weekdays, endDate: s.endDate || null },
     }
     const payload = { ...base, ...byKind[k] }
+       let id = task?.id
     if (task) await updateTask(task.id, payload)
-    else await addTask(payload)
+    else id = await addTask(payload)
+
+    // 后台预生成催促文案（不阻塞保存；失败或没配 AI 就用 i18n 分级模板）
+    const needTexts =
+      nagOn && isAiReady(settings) &&
+      (!task?.nagTexts?.length || task.title !== title || task.nagMax !== payload.nagMax)
+    if (needTexts) refreshNagTexts(settings, id, title, payload.nagMax)
     toast(t('form.saved'))
     onClose()
   }
@@ -135,9 +152,39 @@ export default function TaskForm({ open, onClose, task, defaultDate, categories,
         {(k === 'todo' || k === 'reminder') && (
           <Field label={t('form.remind')} hint={!s.time ? t('form.remindNeedsTime') : undefined}>
             <select className="field" value={s.remindBefore} disabled={!s.time} onChange={(e) => set({ remindBefore: e.target.value })}>
-              {REMIND_OPTS.map((n) => <option key={n} value={n}>{remindLabel(n)}</option>)}
+                           {REMIND_OPTS.map((n) => <option key={n} value={n}>{remindLabel(n)}</option>)}
             </select>
           </Field>
+        )}
+
+        {(k === 'todo' || k === 'reminder') && (
+          <div className="glass-soft flex flex-col gap-3 rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[14px] text-ink">{t('form.nag')}</div>
+                <div className="mt-0.5 text-[12px] leading-relaxed text-faint">
+                  {s.time
+                    ? t('form.nagHint', { start: settings.nagWindowStart || '08:00', end: settings.nagWindowEnd || '22:30' })
+                    : t('form.nagNeedsTime')}
+                </div>
+              </div>
+              {s.time && <Switch checked={s.nag} onChange={(v) => set({ nag: v })} label={t('form.nag')} />}
+            </div>
+            {s.time && s.nag && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t('form.nagEvery')}>
+                  <select className="field" value={s.nagEveryMin} onChange={(e) => set({ nagEveryMin: e.target.value })}>
+                    {NAG_EVERY_OPTS.map((n) => <option key={n} value={n}>{t('form.nagEveryOpt', { n })}</option>)}
+                  </select>
+                </Field>
+                <Field label={t('form.nagMax')}>
+                  <select className="field" value={s.nagMax} onChange={(e) => set({ nagMax: e.target.value })}>
+                    {NAG_MAX_OPTS.map((n) => <option key={n} value={n}>{t('form.nagMaxOpt', { n })}</option>)}
+                  </select>
+                </Field>
+              </div>
+            )}
+          </div>
         )}
 
         {k === 'habit' && (

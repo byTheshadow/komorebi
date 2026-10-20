@@ -165,12 +165,12 @@ export function dayStats(date, data) {
 /* ───────── 通知触发点（本地调度 & 云端同步共用） ─────────
    返回 [{ key, at: Date, title, body }]，key 同时用作通知 tag，
    所以“应用开着时的本地通知”和“云端推送”不会重复弹两次。 */
-export function fireTimes(from, to, data, t, { classRemindMin = 10 } = {}) {
+export function fireTimes(from, to, data, t, { classRemindMin = 10, nagStart = '08:00', nagEnd = '22:30' } = {}) {
   const out = []
   const first = ymd(from)
   const last = ymd(to)
-  const push = (key, at, title, body) => {
-    if (at >= from && at <= to) out.push({ key, at, title, body })
+  const push = (key, at, title, body, tag) => {
+    if (at >= from && at <= to) out.push({ key, at, title, body, tag })
   }
   for (let d = first; d <= last; d = addDays(d, 1)) {
     for (const it of itemsForDate(d, data)) {
@@ -180,7 +180,28 @@ export function fireTimes(from, to, data, t, { classRemindMin = 10 } = {}) {
         const at = atDate(d, it.time)
         const pre = it.ref.remindBefore
         if (pre > 0) push(`${k}:pre`, new Date(at.getTime() - pre * 60000), it.title, t('notify.inMin', { n: pre }))
-        push(`${k}:at`, at, it.title, t('notify.now'))
+                push(`${k}:at`, at, it.title, t('notify.now'))
+
+        // 反复提醒：到期后每隔 N 分钟一次，最多 nagMax 次，只在催促时间窗内、且不跨天
+        const r = it.ref
+        if (r.nag && Number(r.nagEveryMin) > 0 && r.nagMuteDate !== d) {
+          const every = Number(r.nagEveryMin)
+          const max = Math.min(Number(r.nagMax) || 8, 30)
+          const wStart = toMin(nagStart)
+          const wEnd = toMin(nagEnd)
+          for (let n = 1; n <= max; n++) {
+            const nagAt = new Date(at.getTime() + n * every * 60000)
+            if (ymd(nagAt) !== d) break // 不跨天
+            const m = nagAt.getHours() * 60 + nagAt.getMinutes()
+            if (m > wEnd) break // 超出时间窗，后面更晚，直接结束
+            if (m < wStart) continue // 还没到时间窗，跳过但序号照算
+            if (r.nagSnoozeUntil && nagAt.getTime() < r.nagSnoozeUntil) continue
+            const level = n <= 2 ? 1 : n <= 5 ? 2 : 3
+            const nagBody = r.nagTexts?.[n - 1] || t(`notify.nag${level}`, { n: n * every })
+            // key 每条不同（去重用）；tag 同一个待办共用（通知中心里新的覆盖旧的，不会堆一排）
+            push(`${k}:nag:${n}`, nagAt, it.title, nagBody, `${k}:nag`)
+          }
+        }
       } else if (it.kind === 'countdown') {
         push(`${k}:at`, atDate(d, '09:00'), it.title, t('notify.countdownToday'))
       } else if (it.kind === 'interval') {

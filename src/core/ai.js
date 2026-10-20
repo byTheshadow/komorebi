@@ -1,7 +1,7 @@
 // AI 助手：OpenAI 兼容接口（/models、/chat/completions）+ Function Calling 管理日程。
 // 全部在浏览器本地发起请求；API Key 只存在本机 IndexedDB。
 import {
-  db, addTask, updateTask, deleteTask, setTaskDone, toggleCheckin,
+  db, addTask, updateTask, deleteTask, setTaskDone, toggleCheckin, snoozeNag, muteNagToday,
 } from './db.js'
 import {
   TASK_KINDS, addDays, fmtDay, isValidDate, isValidTime, itemsForDate, normTime, weekdayOf, ymd,
@@ -125,7 +125,10 @@ function buildTools(categoryIds) {
     end_date: { type: 'string', description: 'interval/habit only: YYYY-MM-DD last day (omit = forever)' },
     weekdays: { type: 'array', items: { type: 'integer' }, description: 'habit only: 1=Mon … 7=Sun (omit = every day)' },
     category: { type: 'string', enum: categoryIds, description: 'Folder this belongs to on the achievement wall' },
-    notes: { type: 'string' },
+       notes: { type: 'string' },
+    nag: { type: 'boolean', description: 'todo/reminder only: after the due time, keep nagging repeatedly until completed. Requires time.' },
+    nag_every_minutes: { type: 'integer', enum: [5, 10, 30], description: 'nag only: minutes between nags (default 10)' },
+    nag_max: { type: 'integer', description: 'nag only: max number of nags, 1-12 (default 8)' },
   }
   return [
     {
@@ -177,6 +180,22 @@ function buildTools(categoryIds) {
         parameters: { type: 'object', properties: { id: { type: 'integer' } }, required: ['id'] },
       },
     },
+    {
+      type: 'function',
+      function: {
+        name: 'snooze_task',
+        description: 'Pause the repeated nagging of a task. mode "later": pause for N minutes (default 30). mode "today": stop nagging for the rest of today. Use when the user says "remind me later" or "stop bugging me about it today".',
+        parameters: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            mode: { type: 'string', enum: ['later', 'today'] },
+            minutes: { type: 'integer', description: 'later only: 5-240' },
+          },
+          required: ['id', 'mode'],
+        },
+      },
+    },
   ]
 }
 
@@ -200,13 +219,18 @@ function fieldsFromArgs(a, ctx, existing) {
   if (a.end_date !== undefined) out.endDate = isValidDate(a.end_date) ? a.end_date : null
   if (Array.isArray(a.weekdays)) out.weekdays = a.weekdays.map(Number).filter((n) => n >= 1 && n <= 7)
   if (a.category) out.categoryId = ctx.categoryIds.includes(a.category) ? a.category : existing?.categoryId || 'daily'
-  if (a.notes !== undefined) out.notes = String(a.notes)
+   if (a.notes !== undefined) out.notes = String(a.notes)
+  if (a.nag !== undefined) out.nag = !!a.nag
+  if (a.nag_every_minutes !== undefined && [5, 10, 30].includes(Math.round(Number(a.nag_every_minutes)))) {
+    out.nagEveryMin = Math.round(Number(a.nag_every_minutes))
+  }
+  if (a.nag_max !== undefined) out.nagMax = clamp(Math.round(Number(a.nag_max)) || 8, 1, 12)
   return out
 }
 
 const summarize = (t) => ({
   id: t.id, kind: t.kind, title: t.title, date: t.date, time: t.time,
-  every_hours: t.everyHours || undefined, done: t.done || undefined,
+  every_hours: t.everyHours || undefined, done: t.done || undefined, nag: t.nag || undefined,
 })
 
 async function loadData() {
@@ -223,9 +247,15 @@ async function runTool(name, args, ctx) {
         if (!f.title) return { ok: false, error: 'title is required' }
         if (['reminder', 'countdown'].includes(kind) && !f.date) return { ok: false, error: `date is required for ${kind}` }
         if (kind === 'reminder' && !f.time) return { ok: false, error: 'time is required for reminder' }
-        if (kind === 'interval' && !f.everyHours) return { ok: false, error: 'every_hours is required for interval' }
+              if (kind === 'interval' && !f.everyHours) return { ok: false, error: 'every_hours is required for interval' }
+        if (f.nag) {
+          if (!['todo', 'reminder'].includes(kind)) delete f.nag
+          else if (!f.time) return { ok: false, error: 'time is required when nag is true' }
+          else { f.nagEveryMin = f.nagEveryMin || 10; f.nagMax = f.nagMax || 8 }
+        }
         if (!f.date && kind !== 'countdown') f.date = ymd()
-        const id = await addTask({ ...f, kind, source: 'ai' })
+               const id = await addTask({ ...f, kind, source: 'ai' })
+        if (f.nag) refreshNagTexts(ctx.settings, id, f.title, f.nagMax)
         ctx.actions.push({ op: 'create', id, kind, title: f.title, date: f.date, time: f.time || null, everyHours: f.everyHours || null })
         return { ok: true, id }
       }
@@ -233,9 +263,21 @@ async function runTool(name, args, ctx) {
         const task = await db.tasks.get(Number(args.id))
         if (!task) return { ok: false, error: 'task not found' }
         const patch = fieldsFromArgs(args, ctx, task)
-        delete patch.kind
+              delete patch.kind
+        if (patch.nag !== undefined && !['todo', 'reminder'].includes(task.kind)) {
+          delete patch.nag
+        } else if (patch.nag && !(patch.time ?? task.time)) {
+          return { ok: false, error: 'time is required when nag is true' }
+        }
+        if (patch.nag) {
+          patch.nagEveryMin = patch.nagEveryMin || task.nagEveryMin || 10
+          patch.nagMax = patch.nagMax || task.nagMax || 8
+        }
         await updateTask(task.id, patch)
         const next = { ...task, ...patch }
+        if (next.nag && (patch.nag || patch.title !== undefined || patch.nagMax !== undefined)) {
+          refreshNagTexts(ctx.settings, task.id, next.title, next.nagMax)
+        }
         ctx.actions.push({ op: 'update', id: task.id, kind: next.kind, title: next.title, date: next.date, time: next.time || null, everyHours: next.everyHours || null })
         return { ok: true, task: summarize(next) }
       }
@@ -253,6 +295,15 @@ async function runTool(name, args, ctx) {
         if (!task) return { ok: false, error: 'task not found' }
         await deleteTask(task.id)
         ctx.actions.push({ op: 'delete', id: task.id, kind: task.kind, title: task.title })
+        return { ok: true }
+      }
+        case 'snooze_task': {
+        const task = await db.tasks.get(Number(args.id))
+        if (!task) return { ok: false, error: 'task not found' }
+        if (!task.nag) return { ok: false, error: 'this task is not nagging' }
+        if (args.mode === 'today') await muteNagToday(task.id)
+        else await snoozeNag(task.id, clamp(Math.round(Number(args.minutes)) || 30, 5, 240))
+        ctx.actions.push({ op: 'snooze', id: task.id, kind: task.kind, title: task.title })
         return { ok: true }
       }
       case 'query_tasks': {
@@ -291,7 +342,9 @@ async function snapshot(lang) {
   const fmt = (it) => {
     const ref = it.source === 'task' ? `id:${it.ref.id}` : 'class'
     const when = it.time ? `${it.time}${it.endTime ? `-${it.endTime}` : ''}` : 'no time'
-    const extra = it.kind === 'interval' ? ` every ${it.ref.everyHours}h ${it.ref.windowStart}-${it.ref.windowEnd}` : ''
+     const extra =
+      (it.kind === 'interval' ? ` every ${it.ref.everyHours}h ${it.ref.windowStart}-${it.ref.windowEnd}` : '') +
+      (it.ref?.nag ? ` (nagging every ${it.ref.nagEveryMin}min)` : '')
     return `- [${ref}] ${it.kind}${it.done ? ' (done)' : ''} ${when} ${it.title}${extra}`
   }
   for (const [label, d] of [['Today', today], ['Tomorrow', addDays(today, 1)]]) {
@@ -319,6 +372,7 @@ async function buildSystemPrompt(settings, lang, useTools) {
     'Rules:',
     '- Convert relative dates ("tomorrow", "next Wednesday", "in 2 hours") to absolute YYYY-MM-DD and 24-hour HH:mm using the current time above.',
     '- Item kinds: todo (to-do on a date), reminder (one-time alert at a date+time), interval (repeat every N hours inside a daily window), countdown (days until a date), habit (daily check-in).',
+      '- If the user wants to be nagged repeatedly about a todo/reminder until it is done ("keep reminding me", "nag me", "催我"), set nag=true (it needs a time). If the user says they finished it, call complete_task, which stops the nagging. If they say "later" or "not today", call snooze_task.',
     '- Never claim something was saved, changed or deleted unless the tool result says ok. If a tool returns an error, fix the arguments or ask the user.',
     '- If essential information is missing (e.g. a reminder with no time), ask ONE short question instead of guessing.',
     '- When asked about today / tomorrow, answer from the snapshot below (or call query_tasks for other ranges), briefly and kindly; confirm what is done and what remains.',
@@ -347,7 +401,7 @@ const noToolsFor = new Set() // 记住不支持 tools 的 (地址|模型)，下�
 export async function runAssistant({ settings, history, userText }) {
   const lang = settings.lang
   const cats = await db.categories.toArray()
-  const ctx = { actions: [], categoryIds: cats.map((c) => c.id) }
+   const ctx = { actions: [], categoryIds: cats.map((c) => c.id), settings }
   const modelKey = `${normalizeBase(settings.aiBaseUrl)}|${settings.aiModel}`
   let useTools = !noToolsFor.has(modelKey)
 
@@ -425,4 +479,43 @@ export async function aiParseTimetable(settings, text) {
   const end = raw.lastIndexOf(']')
   if (start < 0 || end < 0) throw new ApiError(500, 'no JSON in response')
   return JSON.parse(raw.slice(start, end + 1))
+}
+/* ───────────────────────── 反复提醒：预生成催促文案 ───────────────────────── */
+
+// 保存待办时调用一次，按当前人设生成 N 条语气逐步升级的文案。
+// 通知触发时（可能在后台、甚至 App 已关闭）不能临时联网调 AI，所以必须预生成。
+export async function generateNagTexts(settings, { title, count = 8 }) {
+  const lang = settings.lang
+  const n = clamp(Math.round(Number(count)) || 8, 1, 12)
+  const messages = [
+    {
+      role: 'system',
+      content:
+        `You write repeated phone-notification nudges for an overdue to-do, in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ` +
+        `Personality: ${getPersonaText(settings, lang)}\n` +
+        `Output ONLY a JSON array of exactly ${n} strings, no prose, no code fences. ` +
+        'They are sent one after another a few minutes apart, so they must escalate: the first ones gentle, the middle ones firmer, the last ones urgent but never rude, guilt-tripping or anxiety-inducing. ' +
+        `Each under ${lang === 'zh' ? '40 characters' : '14 words'}. Plain text, no emoji. ` +
+        'Do not repeat the task title (it is shown separately) and do not mention specific times or numbers.',
+    },
+    { role: 'user', content: `Task: ${title}` },
+  ]
+  const res = await chat({ settings, messages }, 45000)
+  const raw = (res?.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim()
+  const start = raw.indexOf('[')
+  const end = raw.lastIndexOf(']')
+  if (start < 0 || end < 0) return []
+  const arr = JSON.parse(raw.slice(start, end + 1))
+  return arr.map((x) => String(x).trim()).filter(Boolean).slice(0, n)
+}
+
+// 后台刷新：失败就静默，通知会自动回退到 i18n 的分级模板
+export async function refreshNagTexts(settings, id, title, count) {
+  if (!isAiReady(settings)) return
+  try {
+    const texts = await generateNagTexts(settings, { title, count })
+    if (texts.length) await updateTask(id, { nagTexts: texts })
+  } catch (e) {
+    console.warn('[komorebi] nag texts failed', e)
+  }
 }

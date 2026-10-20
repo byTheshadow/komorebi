@@ -1,6 +1,6 @@
-import { BookOpen, Check, Hourglass, Repeat } from 'lucide-react'
+import { BookOpen, Bell, Check, Hourglass, Repeat } from 'lucide-react'
 import { useApp } from '../../core/store.jsx'
-import { KIND_COLOR, daysBetween, ymd } from '../../core/schedule.js'
+import { KIND_COLOR, atDate, daysBetween, ymd } from '../../core/schedule.js'
 
 const KIND_ICON = { interval: Repeat, countdown: Hourglass, class: BookOpen }
 
@@ -10,6 +10,9 @@ export default function ItemRow({ item, date, catName, onToggle, onOpen }) {
   const toggleable = ['todo', 'reminder', 'habit'].includes(item.kind)
   const editable = item.source === 'task'
   const Icon = KIND_ICON[item.kind]
+  // 反复提醒：开启了 nag 的 todo / reminder；已到期且没完成 = 逾期（用强调色）
+  const nagging = !!item.ref?.nag && (item.kind === 'todo' || item.kind === 'reminder')
+  const overdue = nagging && !item.done && !!item.time && new Date() >= atDate(date, item.time)
 
   const meta = []
   if (item.kind === 'interval') {
@@ -22,6 +25,7 @@ export default function ItemRow({ item, date, catName, onToggle, onOpen }) {
   }
   if (item.kind === 'class' && item.location) meta.push(item.location)
   if (item.kind === 'habit') meta.push(t('kind.habit'))
+  if (nagging) meta.push(t('cal.nagEvery', { n: item.ref.nagEveryMin }))
   if ((item.kind === 'todo' || item.kind === 'reminder') && catName && item.categoryId !== 'daily') meta.push(catName)
 
   return (
@@ -50,7 +54,14 @@ export default function ItemRow({ item, date, catName, onToggle, onOpen }) {
         onClick={() => editable && onOpen(item)}
         className="min-w-0 flex-1 text-left disabled:cursor-default"
       >
-        <div className={`truncate text-[14px] ${item.done ? 'text-faint line-through' : 'text-ink'}`}>{item.title}</div>
+        <div className="flex items-center gap-1.5">
+          <span className={`truncate text-[14px] ${item.done ? 'text-faint line-through' : overdue ? 'text-accent' : 'text-ink'}`}>
+            {item.title}
+          </span>
+          {nagging && !item.done && (
+            <Bell size={12} strokeWidth={1.75} className={`shrink-0 ${overdue ? 'text-accent' : 'text-faint'}`} />
+          )}
+        </div>
         {(meta.length > 0 || (item.done && item.kind !== 'habit')) && (
           <div className="mt-0.5 flex flex-wrap gap-x-2.5 text-[12px] text-faint">
             {meta.map((m, i) => <span key={i}>{m}</span>)}

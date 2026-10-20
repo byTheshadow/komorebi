@@ -18,11 +18,19 @@ export function startScheduler(getCtx) {
       const now = Date.now()
       const from = new Date(now - CATCH_UP_MS)
       const to = new Date(now + 20000)
-      const due = fireTimes(from, to, await readAll(), t, { classRemindMin: settings.classRemindMin })
-      for (const f of due) {
+        const due = fireTimes(from, to, await readAll(), t, {
+        classRemindMin: settings.classRemindMin,
+        nagStart: settings.nagWindowStart,
+        nagEnd: settings.nagWindowEnd,
+      })
+      // 切回前台补发时，同一个待办的多条催促只弹最新的一条，避免连环轰炸
+      const latestByTag = new Map()
+      for (const f of due) if (f.tag) latestByTag.set(f.tag, f.key)
+            for (const f of due) {
         if (await db.fired.get(f.key)) continue
         await db.fired.put({ key: f.key, at: f.at.getTime() })
-        await notify({ title: f.title, body: f.body, tag: f.key })
+        if (f.tag && latestByTag.get(f.tag) !== f.key) continue // 旧的催促只记账，不弹
+        await notify({ title: f.title, body: f.body, tag: f.tag || f.key })
       }
       await db.fired.where('at').below(now - 3 * 86400000).delete()
     } catch (e) {

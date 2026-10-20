@@ -1,6 +1,7 @@
 // 本地数据库沙盒：所有数据都只存在这台设备的 IndexedDB 里（Dexie 封装）
 // 注意：这个文件会被 Service Worker 复用，所以不要在这里碰 window / localStorage。
 import Dexie from 'dexie'
+import { ymd } from './schedule.js' // schedule.js 是纯函数文件，SW 里复用也安全
 
 export const MAX_MESSAGES = 100 // 聊天记录上限（跨所有对话合计，超出后从最旧的开始丢弃）
 
@@ -35,7 +36,9 @@ export const DEFAULT_SETTINGS = {
   aiPersona: '', // 仅当 aiPresetId === 'custom' 时生效
   // 通知
   notifyEnabled: false,
-  classRemindMin: 10,
+    classRemindMin: 10,
+  nagWindowStart: '08:00', // 反复提醒只在这个时间窗内发
+  nagWindowEnd: '22:30',
   // 云端推送（备用）
   cloudEnabled: false,
   cloudUrl: '',
@@ -139,7 +142,13 @@ export async function addTask(data) {
     windowStart: '09:00', // interval：每天的提醒时间窗
     windowEnd: '21:00',
     endDate: null, // interval / habit：结束日期（空 = 一直）
-    weekdays: [], // habit：星期几（空 = 每天）
+        weekdays: [], // habit：星期几（空 = 每天）
+    nag: false, // todo / reminder：到期没完成就反复提醒
+    nagEveryMin: 10, // 间隔（分钟）：5 / 10 / 30
+    nagMax: 8, // 最多催几次
+    nagTexts: [], // AI 预生成的催促文案（语气逐步升级），为空则用 i18n 模板
+    nagSnoozeUntil: null, // 暂停到某个时间戳（毫秒）
+    nagMuteDate: null, // 'YYYY-MM-DD'：这一天不再催
     done: false,
     doneAt: null,
     source: 'manual', // manual | ai
@@ -148,10 +157,20 @@ export async function addTask(data) {
   })
 }
 
+
 export async function updateTask(id, patch) {
   await db.tasks.update(id, patch)
 }
 
+// 稍后再提醒：暂停催促 N 分钟
+export async function snoozeNag(id, minutes = 10) {
+  await db.tasks.update(id, { nagSnoozeUntil: Date.now() + minutes * 60000 })
+}
+
+// 今天不再提醒
+export async function muteNagToday(id) {
+  await db.tasks.update(id, { nagMuteDate: ymd() })
+}
 export async function deleteTask(id) {
   await db.transaction('rw', db.tasks, db.checkins, async () => {
     await db.tasks.delete(id)

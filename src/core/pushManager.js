@@ -127,9 +127,13 @@ export async function syncNow(settings, t, { force = false } = {}) {
 
   const now = new Date()
   const horizon = new Date(now.getTime() + 7 * 86400000)
-  const items = fireTimes(now, horizon, await readAll(), t, { classRemindMin: settings.classRemindMin })
+   const items = fireTimes(now, horizon, await readAll(), t, {
+    classRemindMin: settings.classRemindMin,
+    nagStart: settings.nagWindowStart,
+    nagEnd: settings.nagWindowEnd,
+  })
     .slice(0, 300)
-    .map((f) => ({ id: f.key, at: f.at.toISOString(), title: f.title, body: f.body }))
+    .map((f) => ({ id: f.key, at: f.at.toISOString(), title: f.title, body: f.body, tag: f.tag || f.key }))
 
   const sig = JSON.stringify([settings.cloudUrl, sub.endpoint, items])
   if (!force && sig === lastSig) return { ok: true, reason: 'unchanged', count: items.length }
