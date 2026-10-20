@@ -142,6 +142,14 @@ const zh = {
   'form.nagMax': '最多提醒', 'form.nagMaxOpt': '{n} 次',
   'cal.nagEvery': '逾期后每 {n} 分钟提醒',
   'action.snooze': '已暂停{kind}的催促',
+  'notif.nagWindow': '反复提醒的时间段',
+  'notif.nagWindowHint': '反复提醒只会在这个时间段内发出，夜里不打扰。',
+  'hero.nagTitle': '已到期，还没完成',
+  'hero.overdueMin': '已逾期 {n} 分钟',
+  'hero.overdueHM': '已逾期 {h} 小时 {m} 分',
+  'hero.nagDone': '完成', 'hero.nagLater': '10 分钟后再说', 'hero.nagMute': '今天不再提醒',
+  'hero.nagMore': '还有 {n} 项也在催，去看看',
+  'hero.nagSnoozed': '10 分钟后再提醒你', 'hero.nagMuted': '今天不再提醒这一项',
 }
 
 const en = {
@@ -283,6 +291,14 @@ const en = {
   'form.nagMax': 'At most', 'form.nagMaxOpt': '{n} times',
   'cal.nagEvery': 'nags every {n} min once overdue',
   'action.snooze': '{kind} nagging paused',
+  'notif.nagWindow': 'Nag hours',
+  'notif.nagWindowHint': 'Repeated reminders are only sent within this time range, so nights stay quiet.',
+  'hero.nagTitle': 'Due, not done yet',
+  'hero.overdueMin': '{n} min overdue',
+  'hero.overdueHM': '{h}h {m}m overdue',
+  'hero.nagDone': 'Done', 'hero.nagLater': 'Later (10 min)', 'hero.nagMute': 'Not today',
+  'hero.nagMore': '{n} more waiting, take a look',
+  'hero.nagSnoozed': "I'll remind you in 10 min", 'hero.nagMuted': 'No more nags for this one today',
 }
 
 const DICT = { zh, en }

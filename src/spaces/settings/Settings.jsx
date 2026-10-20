@@ -147,6 +147,21 @@ export default function Settings({ openNav }) {
     toast(ok ? t('notif.testSent') : t('notif.testFail'), ok ? 'info' : 'error')
   }
 
+  /* ───── 反复提醒时间窗 ───── */
+  const setNagWindow = (patch) => {
+    const next = {
+      nagWindowStart: settings.nagWindowStart || '08:00',
+      nagWindowEnd: settings.nagWindowEnd || '22:30',
+      ...patch,
+    }
+    if (!next.nagWindowStart || !next.nagWindowEnd) return // 时间输入被清空时忽略
+    if (next.nagWindowEnd <= next.nagWindowStart) return toast(t('form.badWindow'), 'error')
+    update(patch)
+    // 时间窗变了，云端队列里的催促也要跟着重算（云端同步只监听任务变化，这里手动触发一次）
+    if (settings.cloudSubscribed) syncNow({ ...settings, ...patch }, t).catch(() => {})
+    return undefined
+  }
+
   /* ───── 云端推送（备用） ───── */
   const cloudSubscribe = async () => {
     if (!settings.cloudUrl || !settings.cloudVapid) return toast(t('cloud.needFields'), 'error')
@@ -328,9 +343,25 @@ export default function Settings({ openNav }) {
             </Row>
             <Row label={t('notif.classRemind')}>
               <select className="field !min-h-[40px] !w-auto !py-1.5" value={settings.classRemindMin} onChange={(e) => update({ classRemindMin: Number(e.target.value) })}>
-                {[0, 5, 10, 15, 30].map((n) => <option key={n} value={n}>{n === 0 ? t('notif.off') : t('form.beforeMin', { n })}</option>)}
+                            {[0, 5, 10, 15, 30].map((n) => <option key={n} value={n}>{n === 0 ? t('notif.off') : t('form.beforeMin', { n })}</option>)}
               </select>
             </Row>
+            <Field label={t('notif.nagWindow')} hint={t('notif.nagWindowHint')}>
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="time"
+                  className="field"
+                  value={settings.nagWindowStart || '08:00'}
+                  onChange={(e) => setNagWindow({ nagWindowStart: e.target.value })}
+                />
+                <input
+                  type="time"
+                  className="field"
+                  value={settings.nagWindowEnd || '22:30'}
+                  onChangFe={(e) => setNagWindow({ nagWindowEnd: e.target.value })}
+                />
+              </div>
+            </Field>
             <div className="flex items-center justify-between gap-3">
               <p className="text-[12px] leading-relaxed text-faint">{t('notif.limit')}</p>
               <button className="btn-soft shrink-0" onClick={sendTest} disabled={perm !== 'granted'}>{t('notif.test')}</button>
